@@ -1,40 +1,56 @@
-Rem Copyright (c) 1990 by Oracle Corporation
-Rem NAME
-REM    UTLSAMPL.SQL
-Rem  FUNCTION
-Rem  NOTES
-Rem  MODIFIED
-Rem	gdudey	   06/28/95 -  Modified for desktop seed database
-Rem	glumpkin   10/21/92 -  Renamed from SQLBLD.SQL
-Rem	blinden   07/27/92 -  Added primary and foreign keys to EMP and DEPT
-Rem	rlim	   04/29/91 -	      change char to varchar2
-Rem	mmoore	   04/08/91 -	      use unlimited tablespace priv
-Rem	pritto	   04/04/91 -	      change SYSDATE to 13-JUL-87
-REM MENDELS 12/07/90 - BUG 30123;
-ADD TO_DATE CALLS SO LANGUAGE INDEPENDENT
-
-Rem
-Rem $Header: utlsampl.sql 7020100.1 94/09/23 22:14:24 cli Generic<base> $ sqlbld.sql
-Rem
-SET TERMOUT OFF
-SET ECHO OFF
-
-Rem CONGDON    Invoked in RDBMS at build time.	 29-DEC-1988
-Rem OATES:     Created: 16-Feb-83
+--Rem Copyright (c) 1990 by Oracle Corporation
+--Rem NAME
+--REM    UTLSAMPL.SQL
+--Rem  FUNCTION
+--Rem  NOTES
+--Rem  MODIFIED
+--Rem	gdudey	   06/28/95 -  Modified for desktop seed database
+--Rem	glumpkin   10/21/92 -  Renamed from SQLBLD.SQL
+--Rem	blinden   07/27/92 -  Added primary and foreign keys to EMP and DEPT
+--Rem	rlim	   04/29/91 -	      change char to varchar2
+--Rem	mmoore	   04/08/91 -	      use unlimited tablespace priv
+--Rem	pritto	   04/04/91 -	      change SYSDATE to 13-JUL-87
+--REM MENDELS 12/07/90 - BUG 30123;
+--REM ADD TO_DATE CALLS SO LANGUAGE INDEPENDENT
+--
+--Rem
+--Rem $Header: utlsampl.sql 7020100.1 94/09/23 22:14:24 cli Generic<base> $ sqlbld.sql
+--Rem
+--SET TERMOUT OFF
+--SET ECHO OFF
+--
+--Rem CONGDON    Invoked in RDBMS at build time.	 29-DEC-1988
+--Rem OATES:     Created: 16-Feb-83
 
 /*
  * SCOTT 계정 생성 및 암호 TIGER 지정
  */
-GRANT (CONNECT, RESOURCE, UNLIMITED TABLESPACE) TO SCOTT IDENTIFIED BY TIGER;
 
-ALTER USER SCOTT DEFAULT TABLESPACE USERS;
-ALTER USER SCOTT TEMPORARY TABLESPACE TEMP;
 
-CONNECT SCOTT/TIGER
+-- 이 부분은 sqlplus에서 실행할 것 --
 
+grant resource, connect, dba to test; -- test에 권한 부여
+--alter user test identified by test account unlock;  -- test 사용자 계정 잠김 해제
+
+GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO test; -- cmd
+ALTER USER test DEFAULT TABLESPACE USERS; -- USERS 테이블스페이스 공간 할당 -- User altered.
+ALTER USER test TEMPORARY TABLESPACE TEMP; -- TEMP 테이블스페이스 공간 할당 -- User altered.
+GRANT unlimited TABLESPACE TO test; -- TABLESPACE 공간 무제한 부여(GRANT) -- Grant succeeded. 
+
+alter user test account unlock; -- 새로운 사용자 계정 잠김 해제 -- cmd
+-- alter user test identified by test account unlock; 이 문구랑 동일
+
+------------------------------
+
+CONNECT test/111111; -- CONNECT test/test..
+
+------------------------------
+
+SELECT * FROM EMP;
 
 
 DROP TABLE DEPT;
+
 
 CREATE TABLE DEPT (
 	DEPTNO NUMBER(2) CONSTRAINT PK_DEPT PRIMARY KEY,
@@ -293,3 +309,10 @@ COMMIT;
 SET TERMOUT ON
 
 SET ECHO ON
+
+
+
+
+
+
+
