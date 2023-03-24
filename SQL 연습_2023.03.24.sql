@@ -1,0 +1,206 @@
+-- UNPIVOT 별칭 1: 인라인뷰 별칭 소문자 문자열
+
+-- 해당 쿼리를 UNPIVOT 해보겠다
+SELECT DEPTNO
+		, MAX(DECODE(job, 'CLERK', SAL)) AS "clerk"
+		, MAX(DECODE(job, 'SALESMAN', SAL)) AS "sales"
+		, MAX(DECODE(job, 'PRESIDENT', SAL)) AS "president"
+		, MAX(DECODE(job, 'MANAGER', SAL)) AS "manager"
+		, MAX(DECODE(job, 'ANALYST', SAL)) AS "analyst"
+		FROM EMP
+		GROUP BY DEPTNO
+		ORDER BY DEPTNO ;
+		
+SELECT DEPTNO
+, CASE WHEN JOB='CLERK' THEN SAL ELSE 0 AS "clerk",
+, CASE WHEN JOB='SALESMAN' THEN SAL ELSE 0 AS "sales"
+, CASE WHEN JOB='PRESIDENT' THEN SAL ELSE 0 AS "president"
+, CASE WHEN JOB='MANAGER' THEN SAL ELSE 0 AS "manager"
+, CASE WHEN JOB='ABALYST' THEN SAL ELSE 0 AS "analyst"
+FROM EMP;
+
+SELECT *
+	FROM (SELECT DEPTNO
+		, MAX(DECODE(job, 'CLERK', SAL)) AS "clerk"
+		, MAX(DECODE(job, 'SALESMAN', SAL)) AS "sales"
+		, MAX(DECODE(job, 'PRESIDENT', SAL)) AS "president"
+		, MAX(DECODE(job, 'MANAGER', SAL)) AS "manager"
+		, MAX(DECODE(job, 'ANALYST', SAL)) AS "analyst"
+		FROM EMP
+		GROUP BY DEPTNO
+		ORDER BY DEPTNO )
+	UNPIVOT (SAL FOR JOB IN ("clerk", "sales", "president", "manager", "analyst"))
+	ORDER BY DEPTNO, JOB
+	;
+
+SELECT * FROM EMP;
+
+-- UNPIVOT 별칭 2: 인라인뷰 별칭 대문자 문자열
+SELECT *
+	FROM (SELECT DEPTNO
+	,MAX(DECODE(JOB,'CLECK',SAL)) AS "CLERK"
+	,MAX(DECODE(JOB,'SALESMAN',SAL)) AS "SALES"
+	,MAX(DECODE(JOB,'PRESIDENT',SAL)) AS "PRESI"
+	,MAX(DECODE(JOB,'MANAGER',SAL)) AS "MAN"
+	,MAX(DECODE(JOB,'ANALTST',SAL)) AS "ANA"
+	FROM EMP
+	GROUP BY DEPTNO
+	ORDER BY DEPTNO)
+	UNPIVOT(SAL FOR JOB IN ("CLERK","SALES","PRESI","MAN","ANA"))
+	ORDER BY DEPTNO, JOB
+	;
+
+/* 
+ * JOIN ... ON 구문
+ */
+SELECT * FROM EMP E JOIN DEPT D
+ON E.DEPTNO = D.DEPTNO ;
+
+SELECT E.EMPNO
+	, E.ENAME
+	, E.JOB
+	, E.HIREDATE 
+	, E.SAL 
+	, E.COMM 
+	, D.DEPTNO 
+	, D.DNAME
+	, D.LOC
+	FROM EMP E JOIN DEPT D
+ON E.DEPTNO = D.DEPTNO ;
+
+/*
+ * SAL 구문을 이용하여 해당 구간에 해당되는 직원을 연결 (1:1 관계)
+*/
+SELECT *
+FROM EMP E, SALGRADE S
+WHERE E.SAL BETWEEN S.LOSAL AND S.HISAL ;
+
+WITH Z (SELECT E.EMPNO
+	, E.ENAME
+	, E.JOB
+	, E.HIREDATE 
+	, E.SAL 
+	, E.COMM
+	, S.GRADE 
+	FROM EMP E, SALGRADE S
+	WHERE E.SAL BETWEEN S.LOSAL AND S.HISAL)
+
+	SELECT * FROM Z;
+
+COMMIT;
+
+
+
+DESC EMP_SAL;
+
+/* 
+ * SELF-JOIN : 하나의 테이블에 성질이 동일한 2개 이상의 컬럼의 관계를 이용하여
+ * 원하는 레코드의 관계를 산출하고 싶은 경우 사용
+ * 
+ * EMP 테이블 : empno 사번과 mgr 심사 사번 (동일한 사번)
+ * 
+ */
+
+/* INNER JOIN이라서 매니저 없는 사람은 뽑히지 않는다 */
+SELECT E1.EMPNO
+	, E1.ENAME
+	, E1.MGR
+	, E2.EMPNO AS MGR_EMPNO
+	, E2.ENAME AS MGR_ENAME
+FROM EMP E1 JOIN EMP E2
+ON E1.MGR = E2.EMPNO;
+
+/* 직원 기준으로 하고 싶다면 LEFT OUTER JOIN */
+/* INNER JOIN이라서 매니저 없는 사람은 뽑히지 않는다 */
+SELECT E1.EMPNO
+	, E1.ENAME
+	, E1.MGR
+	, E2.EMPNO AS MGR_EMPNO
+	, E2.ENAME AS MGR_ENAME
+FROM EMP E1 LEFT OUTER JOIN EMP E2
+ON E1.MGR = E2.EMPNO;
+
+SELECT *
+FROM EMP E1 RIGHT JOIN DEPT D 
+ON E1.EMPNO = D.DEPTNO 
+LEFT OUTER JOIN SALGRADE S 
+	ON E1.SAL BETWEEN S.LOSAL AND S.HISAL 
+LEFT OUTER JOIN EMP E2
+	ON E1.MGR = E2.EMPNO;
+	
+/* 
+ * sub-query 서브쿼리 (쿼리 문에 사용되는 쿼리)
+ * 
+ * 서브쿼리 결과 : 단일 값 출력, 다중행(하나의 컬럼에 행 배열)
+ * 다중열(두개 이상의 컬럼별 배열)
+ * 
+ */
+
+SELECT DEPTNO, MAX(SAL)
+FROM EMP
+GROUP BY DEPTNO;
+
+SELECT *
+FROM EMP 
+WHERE (DEPTNO, SAL) IN (SELECT DEPTNO, MIN(SAL)
+						FROM EMP e 
+						GROUP BY DEPTNO);
+						
+/* 
+ * CREATE TABLE
+ * 
+*/
+DROP TABLE EMP_NEW 
+
+CREATE TABLE EMP_NEW1
+(
+	EMPNO NUMBER(4)
+	, ENAME VARCHAR(10)
+	, JOB VARCHAR2(9)
+	, MGR NUMBER(4)
+	, HIREDATE DATE
+	, SAL NUMBER(7,2)
+	, COMM NUMBER(7,2)
+	, DEPTNO NUMBER(2)
+);
+
+SELECT *
+FROM EMP_NEW1;
+
+-- 컬럼 추가
+ALTER TABLE EMP_NEW1
+ADD TEL VARCHAR2(20);
+
+-- 컬럼 조건 변경
+ALTER TABLE EMP_NEW1
+MODIFY EMPNO NUMBER(5);
+
+ALTER TABLE EMP_NEW1
+DROP COLUMN TEL;
+
+/*  
+ *
+ * SEQUENCE
+ * 
+ * 필요한 일련번호를 만들어 사용하거나 일련번호를 PK로 사용하는 경우에 사용
+ * 
+ */
+
+CREATE SEQUENCE sqe_dept
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 9999999999999
+MINVALUE 1 
+nocycle
+nocache;
+
+SELECT * from DEPT_TEMP2;
+
+INSERT INTO DEPT_TEMP2 VALUES (seq_dept_nextval);
+
+/*
+ * HR 스키마(오라클 샘플 스키마 HR)
+ */
+
+
+
